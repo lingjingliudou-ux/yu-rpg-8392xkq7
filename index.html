@@ -2,30 +2,30 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>ゆうしゃのRPG</title>
+<title>ゆうしゃの神RPG</title>
 <style>
 body{
-  background:#111;
-  color:#fff;
+  background:black;
+  color:white;
   font-family:monospace;
   text-align:center;
 }
 
 #game{
-  max-width:500px;
+  max-width:520px;
   margin:auto;
   padding:20px;
-  background:#222;
-  border:4px solid #fff;
+  background:#111;
+  border:4px solid white;
+  position:relative;
 }
 
 button{
   margin:5px;
-  padding:10px;
+  padding:8px;
   background:black;
   color:white;
   border:2px solid white;
-  font-size:16px;
 }
 
 button:hover{
@@ -33,111 +33,206 @@ button:hover{
   color:black;
 }
 
-#log{
-  margin-top:15px;
-  text-align:left;
-  min-height:120px;
-  background:black;
-  padding:10px;
-  border:2px solid white;
+.bar{
+  width:100%;
+  background:#333;
+  height:15px;
+  margin:5px 0;
+  border:1px solid white;
+}
+
+.fill{
+  height:100%;
+  background:lime;
+}
+
+.enemyFill{
+  background:red;
+}
+
+#damage{
+  position:absolute;
+  font-size:22px;
+  color:red;
+  font-weight:bold;
+  display:none;
+}
+
+@keyframes shake{
+  0%{transform:translateX(0);}
+  25%{transform:translateX(-5px);}
+  50%{transform:translateX(5px);}
+  75%{transform:translateX(-5px);}
+  100%{transform:translateX(0);}
+}
+
+.shake{
+  animation:shake 0.3s;
+}
+
+img{
+  width:120px;
 }
 </style>
 </head>
 <body>
 
 <div id="game">
-  <h1>ゆうしゃのぼうけん</h1>
-  <p id="status"></p>
 
-  <button onclick="startBattle()">▶ モンスター出現</button>
+<div id="title">
+<h1>⚔ ゆうしゃの神伝説</h1>
+<button onclick="newGame()">はじめから</button>
+<button onclick="continueGame()">つづきから</button>
+</div>
 
-  <div id="commandBox" style="display:none;">
-    <h3>コマンド</h3>
-    <button onclick="fight()">たたかう</button>
-    <button onclick="spell()">じゅもん</button>
-    <button onclick="heal()">かいふく</button>
-    <button onclick="runAway()">にげる</button>
+<div id="main" style="display:none;">
+
+<p id="status"></p>
+
+<div class="bar"><div id="hpBar" class="fill"></div></div>
+<div class="bar"><div id="mpBar" class="fill" style="background:cyan;"></div></div>
+
+<div id="map">
+  <button onclick="forest()">🌲 森</button>
+  <button onclick="castle()">🏰 城</button>
+</div>
+
+<div id="battle" style="display:none;">
+  <h3 id="enemyName"></h3>
+
+  <div class="bar">
+    <div id="enemyBar" class="fill enemyFill"></div>
   </div>
 
-  <div id="log"></div>
+  <img id="enemyImg">
+  <br>
+
+  <button onclick="attack()">⚔ 攻撃</button>
+  <button onclick="fire()">🔥 ファイア</button>
+</div>
+
+<div id="damage"></div>
+<div id="log"></div>
+
+</div>
 </div>
 
 <script>
-let hero = { hp:30, maxHp:30 };
+let hero;
 let enemy;
 
-function updateStatus(){
-  document.getElementById("status").innerText =
-    "ゆうしゃ HP: " + hero.hp +
-    (enemy ? " | スライム HP: " + enemy.hp : "");
+function newGame(){
+  localStorage.removeItem("ultimateSave");
+  hero={
+    hp:50,maxHp:50,
+    mp:20,maxMp:20,
+    level:1,gold:0
+  };
+  startGame();
 }
 
-function log(text){
-  document.getElementById("log").innerHTML += text + "<br>";
-  document.getElementById("log").scrollTop =
-    document.getElementById("log").scrollHeight;
+function continueGame(){
+  hero=JSON.parse(localStorage.getItem("ultimateSave"));
+  if(!hero){ alert("セーブがない！"); return; }
+  startGame();
 }
 
-function startBattle(){
-  enemy = { hp:20 };
-  log("スライムがあらわれた！");
-  document.getElementById("commandBox").style.display="block";
-  updateStatus();
+function startGame(){
+  document.getElementById("title").style.display="none";
+  document.getElementById("main").style.display="block";
+  update();
 }
 
-function fight(){
-  let damage = Math.floor(Math.random()*6)+3;
-  enemy.hp -= damage;
-  log("ゆうしゃの攻撃！ "+damage+" ダメージ！");
-  checkEnemy();
+function save(){
+  localStorage.setItem("ultimateSave",JSON.stringify(hero));
 }
 
-function spell(){
-  let damage = Math.floor(Math.random()*10)+5;
-  enemy.hp -= damage;
-  log("メラ！ "+damage+" ダメージ！");
-  checkEnemy();
+function update(){
+  document.getElementById("status").innerText=
+   "Lv:"+hero.level+" G:"+hero.gold;
+
+  document.getElementById("hpBar").style.width=
+    (hero.hp/hero.maxHp*100)+"%";
+
+  document.getElementById("mpBar").style.width=
+    (hero.mp/hero.maxMp*100)+"%";
+
+  save();
 }
 
-function heal(){
-  let heal = Math.floor(Math.random()*8)+5;
-  hero.hp += heal;
-  if(hero.hp > hero.maxHp) hero.hp = hero.maxHp;
-  log("ホイミ！ "+heal+" 回復！");
-  enemyTurn();
-  updateStatus();
+function forest(){
+  startBattle("スライム",30,8,"https://i.imgur.com/4AiXzf8.png");
 }
 
-function runAway(){
-  log("ゆうしゃは にげだした！");
-  document.getElementById("commandBox").style.display="none";
-  enemy = null;
-  updateStatus();
+function castle(){
+  startBattle("魔王",100,18,"https://i.imgur.com/7yUvePI.png");
 }
 
-function checkEnemy(){
-  if(enemy.hp <= 0){
-    log("スライムをたおした！");
-    document.getElementById("commandBox").style.display="none";
-    enemy = null;
-  } else {
+function startBattle(name,hp,atk,img){
+  enemy={name,hp,maxHp:hp,atk};
+  document.getElementById("enemyName").innerText=name+" 出現！";
+  document.getElementById("enemyImg").src=img;
+  document.getElementById("enemyBar").style.width="100%";
+  document.getElementById("battle").style.display="block";
+  document.getElementById("map").style.display="none";
+}
+
+function showDamage(num){
+  let d=document.getElementById("damage");
+  d.innerText="-"+num;
+  d.style.display="block";
+  d.style.top="150px";
+  d.style.left="220px";
+  setTimeout(()=>{ d.style.display="none"; },500);
+}
+
+function attack(){
+  let dmg=Math.floor(Math.random()*10)+5;
+  enemy.hp-=dmg;
+  showDamage(dmg);
+  document.getElementById("enemyImg").classList.add("shake");
+  setTimeout(()=>{
+    document.getElementById("enemyImg").classList.remove("shake");
+  },300);
+  after();
+}
+
+function fire(){
+  if(hero.mp<5) return;
+  hero.mp-=5;
+  let dmg=Math.floor(Math.random()*20)+10;
+  enemy.hp-=dmg;
+  showDamage(dmg);
+  after();
+}
+
+function after(){
+  if(enemy.hp<=0){
+    hero.gold+=20;
+    endBattle();
+  }else{
     enemyTurn();
   }
-  updateStatus();
+
+  document.getElementById("enemyBar").style.width=
+    (enemy.hp/enemy.maxHp*100)+"%";
+
+  update();
 }
 
 function enemyTurn(){
-  let damage = Math.floor(Math.random()*5)+2;
-  hero.hp -= damage;
-  log("スライムの攻撃！ "+damage+" ダメージ！");
-  if(hero.hp <= 0){
-    log("ゆうしゃは たおれた…");
-    document.getElementById("commandBox").style.display="none";
+  let dmg=Math.floor(Math.random()*enemy.atk)+5;
+  hero.hp-=dmg;
+  if(hero.hp<=0){
+    alert("ゲームオーバー");
+    location.reload();
   }
-  updateStatus();
 }
 
-updateStatus();
+function endBattle(){
+  document.getElementById("battle").style.display="none";
+  document.getElementById("map").style.display="block";
+}
 </script>
 
 </body>
