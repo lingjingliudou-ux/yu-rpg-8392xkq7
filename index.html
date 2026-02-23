@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ゆうちゃんRPG EVOLUTION</title>
+<style>
+body{
+  background:#111;
+  color:#fff;
+  font-family:"Courier New", monospace;
+  text-align:center;
+  margin:0;
+}
+#game{
+  max-width:520px;
+  margin:auto;
+  padding:15px;
+  background:#222;
+  border:4px solid #fff;
+}
+button{
+  margin:4px;
+  padding:8px;
+  background:#444;
+  color:white;
+  border:2px solid white;
+}
+button:hover{background:#666;}
+.bar{
+  height:12px;
+  background:#555;
+  margin:4px 0;
+}
+.fill{
+  height:100%;
+  background:#00ff88;
+}
+.hidden{display:none;}
+.big{font-size:28px;}
+</style>
+</head>
+<body>
+
+<div id="game">
+<h1>ゆうちゃんRPG EVOLUTION</h1>
+
+<p id="stage">ステージ 1</p>
+<p id="enemyName" class="big">メガネ屋さん</p>
+
+<div class="bar"><div id="enemyHPbar" class="fill"></div></div>
+<p id="enemyHPtext"></p>
+
+<p>😎 ゆうちゃん Lv <span id="level">1</span></p>
+<div class="bar"><div id="playerHPbar" class="fill"></div></div>
+<p id="playerHPtext"></p>
+
+<p>EXP: <span id="exp">0</span> / 50</p>
+<p>🔥ゲージ: <span id="rage">0</span>%</p>
+<p>💰コイン: <span id="coins"></span></p>
+
+<p id="log">冒険が始まった！</p>
+
+<button onclick="attack()">たたく</button>
+<button onclick="skill()">メガネビーム</button>
+<button onclick="ultimate()">🔥超必殺</button>
+<button onclick="shop()">ショップ</button>
+</div>
+
+<script>
+let player = {
+  hp:100,
+  maxHp:100,
+  level:1,
+  exp:0,
+  rage:0,
+  coins:50
+};
+
+let enemy = {};
+let stage=1;
+
+function generateEnemy(){
+  let names=["メガネ屋さん","移動メガネ屋台","高級メガネ店長"];
+  let bossNames=["伝説のメガネ神"];
+  if(stage%5===0){
+    enemy.name=bossNames[0];
+    enemy.maxHp=150+stage*5;
+  }else{
+    enemy.name=names[Math.floor(Math.random()*names.length)];
+    enemy.maxHp=60+stage*5;
+  }
+  enemy.hp=enemy.maxHp;
+  update();
+}
+
+function update(){
+  document.getElementById("enemyName").innerText=enemy.name;
+  document.getElementById("enemyHPbar").style.width=(enemy.hp/enemy.maxHp*100)+"%";
+  document.getElementById("enemyHPtext").innerText="敵HP "+enemy.hp+"/"+enemy.maxHp;
+  document.getElementById("playerHPbar").style.width=(player.hp/player.maxHp*100)+"%";
+  document.getElementById("playerHPtext").innerText="HP "+player.hp+"/"+player.maxHp;
+  document.getElementById("level").innerText=player.level;
+  document.getElementById("exp").innerText=player.exp;
+  document.getElementById("rage").innerText=player.rage;
+  document.getElementById("coins").innerText=player.coins;
+  document.getElementById("stage").innerText="ステージ "+stage;
+  save();
+}
+
+function log(t){document.getElementById("log").innerText=t;}
+
+function attack(){
+  let dmg=10+Math.floor(Math.random()*10);
+  enemy.hp-=dmg;
+  player.rage+=10;
+  log("たたく！ "+dmg+" ダメージ！");
+  turn();
+}
+
+function skill(){
+  let dmg=20+Math.floor(Math.random()*15);
+  enemy.hp-=dmg;
+  player.rage+=15;
+  log("メガネビーム！ "+dmg+" ダメージ！");
+  turn();
+}
+
+function ultimate(){
+  if(player.rage<100){log("ゲージ不足！");return;}
+  let dmg=80;
+  enemy.hp-=dmg;
+  player.rage=0;
+  log("🔥超必殺！！ "+dmg+" ダメージ！！");
+  turn();
+}
+
+function turn(){
+  if(enemy.hp<=0){
+    player.exp+=20;
+    player.coins+=15;
+    stage++;
+    log("勝利！EXP+20 コイン+15");
+    levelUp();
+    generateEnemy();
+    return;
+  }
+  let dmg=8+stage;
+  player.hp-=dmg;
+  if(player.hp<=0){
+    log("やられた…HP全回復！");
+    player.hp=player.maxHp;
+  }
+  update();
+}
+
+function levelUp(){
+  if(player.exp>=50){
+    player.level++;
+    player.exp=0;
+    player.maxHp+=20;
+    player.hp=player.maxHp;
+    log("レベルアップ！ Lv"+player.level);
+  }
+}
+
+function shop(){
+  if(player.coins>=30){
+    player.coins-=30;
+    player.maxHp+=10;
+    player.hp=player.maxHp;
+    log("最大HPアップ！");
+  }else{
+    log("コイン不足！");
+  }
+  update();
+}
+
+function save(){
+  localStorage.setItem("yuSave",JSON.stringify({player,stage}));
+}
+
+function load(){
+  let data=localStorage.getItem("yuSave");
+  if(data){
+    let d=JSON.parse(data);
+    player=d.player;
+    stage=d.stage;
+  }
+}
+
+load();
+generateEnemy();
+update();
+</script>
+</body>
+</html>
