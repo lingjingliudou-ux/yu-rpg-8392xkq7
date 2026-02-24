@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+[<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
@@ -94,3 +94,4 @@ function showCritEffect() {
 
 </body>
 </html>
+](https://lingjingliudou-ux.github.io/yu-rpg-8392xkq7/)
